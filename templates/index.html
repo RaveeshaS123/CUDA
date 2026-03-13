@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Legal Clause AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+<div class="container">
+    <h2>Clause Classification AI</h2>
+    <p>Paste legal text from a contract to identify its category.</p>
+    
+    <textarea id="inputText" placeholder="Enter text snippet (e.g., 'This agreement begins on January 1st...')"></textarea>
+    <button onclick="getPrediction()">Analyze Clause</button>
+
+    <div id="result-box" style="display:none;">
+        <div class="label-title">Identified Clause Type</div>
+        <div id="clauseName" class="prediction-text">---</div>
+
+      
+        <div class="confidence-text">
+            Confidence: <span id="confidenceValue">---</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function getPrediction() {
+        const text = document.getElementById('inputText').value.trim();
+        if (!text) {
+            alert('Please enter some text to analyze.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                alert('Error: ' + (error.error || 'Unknown error'));
+                return;
+            }
+
+            const data = await response.json();
+
+            // Update UI
+            document.getElementById('clauseName').innerText =
+                data.clause_name || 'No clause identified';
+
+            if (data.confidence !== undefined) {
+                const confidencePercent = (data.confidence * 100).toFixed(2);
+                document.getElementById('confidenceValue').innerText =
+                    confidencePercent + '%';
+            } else {
+                document.getElementById('confidenceValue').innerText = 'N/A';
+            }
+
+            document.getElementById('result-box').style.display = 'block';
+
+        } catch (err) {
+            alert('Request failed: ' + err.message);
+        }
+    }
+</script>
+
+</body>
+</html>
